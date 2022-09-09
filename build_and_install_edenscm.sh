@@ -36,8 +36,10 @@ getdeps="python3 $repo_path/$getdeps_py"
 
 for project in "eden_scm" "eden" "mononoke";
 do
-  $getdeps build "$project" --install-dir="$prefix/$project"
-  echo "Built project $project" >> "$status"
+  if [ ! -d "$prefix/$project/bin" ]; then
+    $getdeps build "$project" --install-dir="$prefix/$project"
+    echo "Built project $project" >> "$status"
+  fi
 
   $getdeps fixup-dyn-deps "$project" "$prefix/$project"
   echo "Patched dynamic library paths for $project" >> "$status"
