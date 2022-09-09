@@ -30,6 +30,8 @@ if [ ! -f "$repo_path/$getdeps_py" ]; then
   fi
 fi
 
+echo "Using repo at: $repo_path" >> "$status"
+
 getdeps="python3 $repo_path/$getdeps_py"
 
 for project in "eden_scm" "eden" "mononoke";
