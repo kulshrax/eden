@@ -7,22 +7,30 @@ if [ $# -lt 1 ]; then
     exit 1
 fi
 
-prefix=$1
+prefix=$(realpath "$1")
 mkdir -p "$prefix"
 cd "$prefix"
 
 status="$prefix/status"
 echo "Installing under: $prefix" > "$status"
 
-repo="source"
-repo_url="https://github.com/kulshrax/eden.git"
-repo_path="$prefix/$repo"
-getdeps="python3 $repo_path/build/fbcode_builder/getdeps.py"
+repo_path=$(dirname "$0")
+getdeps_py="build/fbcode_builder/getdeps.py"
 
-if [ ! -d "$repo_path" ]; then
-  git clone "$repo_url" "$repo_path"
-  echo "Cloned repo to: $repo_path" >> "$status"
+# If we're not running the script from within the eden repo itself, check if
+# there's a copy of the repo in the installation directory, otherwise clone it.
+if [ ! -f "$repo_path/$getdeps_py" ]; then
+  repo="source"
+  repo_url="https://github.com/kulshrax/eden.git"
+  repo_path="$prefix/$repo"
+
+  if [ ! -d "$repo_path" ]; then
+    git clone "$repo_url" "$repo_path"
+    echo "Cloned repo to: $repo_path" >> "$status"
+  fi
 fi
+
+getdeps="python3 $repo_path/$getdeps_py"
 
 for project in "eden_scm" "eden" "mononoke";
 do
