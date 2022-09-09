@@ -11,8 +11,8 @@ prefix=$(realpath "$1")
 mkdir -p "$prefix"
 cd "$prefix"
 
-status="$prefix/status"
-echo "Installing under: $prefix" > "$status"
+status="$prefix/build_status.log"
+echo "Installing under: $prefix" >> "$status"
 
 repo_path=$(dirname "$0")
 getdeps_py="build/fbcode_builder/getdeps.py"
@@ -61,8 +61,8 @@ cat > "$prefix/fix_perms.sh" << EOF
 
 for bin in "$edenfs" "$privhelper";
 do
-  sudo chown root "\$bin"
-  sudo chmod u+s "\$bin"
+  chown root "\$bin"
+  chmod u+s "\$bin"
 done
 EOF
 chmod +x "$prefix/fix_perms.sh"
@@ -73,4 +73,9 @@ alias eden="$edenfs_bin_dir/edenfsctl --config-dir=\$HOME/.eden"
 alias getdeps="$getdeps"
 EOF
 
-echo "Completed successfully" >> "$status"
+rm "$status"
+echo "EdenSCM installed successfully! Please run the following:"
+echo
+echo "sudo $prefix/fix_perms.sh"
+echo "source $prefix/env.rc"
+echo
