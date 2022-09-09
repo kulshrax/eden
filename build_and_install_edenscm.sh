@@ -7,15 +7,20 @@ if [ $# -lt 1 ]; then
     exit 1
 fi
 
+repo_path=$(dirname "$(realpath "$0")")
+getdeps_py="build/fbcode_builder/getdeps.py"
+
 prefix=$(realpath "$1")
 mkdir -p "$prefix"
 cd "$prefix"
 
-status="$prefix/build_status.log"
-echo "Installing under: $prefix" >> "$status"
+log_file="$prefix/build_status.log"
 
-repo_path=$(dirname "$0")
-getdeps_py="build/fbcode_builder/getdeps.py"
+function write_log {
+  echo "$(date '+%Y-%m-%d %H:%M:%S') " "$@" >> "$log_file"
+}
+
+write_log "Installing under: $prefix"
 
 # If we're not running the script from within the eden repo itself, check if
 # there's a copy of the repo in the installation directory, otherwise clone it.
@@ -26,11 +31,11 @@ if [ ! -f "$repo_path/$getdeps_py" ]; then
 
   if [ ! -d "$repo_path" ]; then
     git clone "$repo_url" "$repo_path"
-    echo "Cloned repo to: $repo_path" >> "$status"
+    write_log "Cloned repo to: $repo_path"
   fi
 fi
 
-echo "Using repo at: $repo_path" >> "$status"
+write_log "Using repo at: $repo_path"
 
 getdeps="python3 $repo_path/$getdeps_py"
 
@@ -38,11 +43,13 @@ for project in "eden_scm" "eden" "mononoke";
 do
   if [ ! -d "$prefix/$project/bin" ]; then
     $getdeps build "$project" --install-dir="$prefix/$project"
-    echo "Built project $project" >> "$status"
+    write_log "Built project $project"
   fi
 
+  set -x
   $getdeps fixup-dyn-deps "$project" "$prefix/$project"
-  echo "Patched dynamic library paths for $project" >> "$status"
+  set +x
+  write_log "Patched dynamic library paths for $project"
 done
 
 hg_bin_dir="$prefix/eden_scm/bin"
@@ -75,7 +82,7 @@ alias eden="$edenfs_bin_dir/edenfsctl --config-dir=\$HOME/.eden"
 alias getdeps="$getdeps"
 EOF
 
-rm "$status"
+write_log "Done!"
 echo "EdenSCM installed successfully! Please run the following:"
 echo
 echo "sudo $prefix/fix_perms.sh"
