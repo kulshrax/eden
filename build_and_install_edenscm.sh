@@ -53,6 +53,7 @@ do
     # artifacts into a temporary directory. Any binary artifacts likely won't
     # run at this point because they will be missing dynamic library paths to
     # any dependencies that were built from source by getdeps.
+    write_log "Building project $project"
     $getdeps build "$project"
     write_log "Built project $project"
   else
@@ -62,6 +63,7 @@ do
   # Use patchelf to patch the executables with the correct paths to locally
   # built dynamic dependencies. The patched executables will be copied from
   # the temporary install directory to the actual desired install directory.
+  write_log "Patching dynamic library paths for $project"
   $getdeps fixup-dyn-deps "$project" "$prefix/$project"
   write_log "Patched dynamic library paths for $project"
 
