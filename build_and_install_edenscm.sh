@@ -105,6 +105,7 @@ chmod +x "$prefix/fix_perms.sh"
 # use the newly-built binaries.
 cat > "$prefix/env.rc" << EOF
 export PATH="$hg_bin_dir:$edenfs_bin_dir:$mononoke_bin_dir:\$PATH"
+export EDENFS_SERVER_PATH="$edenfs_bin"
 alias eden="$edenfs_bin_dir/edenfsctl --config-dir=\$HOME/.eden"
 alias getdeps="$getdeps"
 EOF
