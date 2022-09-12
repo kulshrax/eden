@@ -11,8 +11,7 @@ repo_path=$(dirname "$(realpath "$0")")
 getdeps_py="build/fbcode_builder/getdeps.py"
 
 prefix=$(realpath "$1")
-patched_prefix="$prefix/patched"
-mkdir -p "$patched_prefix"
+mkdir -p "$prefix"
 cd "$prefix"
 
 # Since the build process spews a lot of output to both stdout and stderr,
@@ -45,7 +44,7 @@ getdeps="python3 $repo_path/$getdeps_py"
 for project in "eden_scm" "eden" "mononoke";
 do
   tmp_install_dir="$($getdeps show-inst-dir $project)"
-  write_log "Using temporary install directory: $tmp_install_dir"
+  write_log "Temporary install directory for $project: $tmp_install_dir"
 
   # Avoid rebuilding the project if possible; the already-built files will
   # still be patched and copied to the specified destination directory.
@@ -56,6 +55,8 @@ do
     # any dependencies that were built from source by getdeps.
     $getdeps build "$project"
     write_log "Built project $project"
+  else
+    write_log "Skipping build for project $project"
   fi
 
   # Use patchelf to patch the executables with the correct paths to locally
@@ -67,7 +68,7 @@ do
   # Copy any files that weren't copied in the above patching step. These would
   # be any non-binary files, such as scripts and other non-executable build
   # artifacts. Notably, this includes all of Mercurial's Python code.
-  cp -nr "$tmp_install_dir" "$prefix/$project"
+  cp -nr "$tmp_install_dir" "$prefix"
   write_log "Copied non-binary files to $prefix/$project"
 done
 
