@@ -1,5 +1,33 @@
 #!/bin/bash
 
+# Set up working executables for Sapling (hg), EdenFS, and Mononoke.
+#
+# Building the various components of EdenSCM using getdeps.py can be fiddly,
+# so this scripts helps automate the process. The basic steps for each project
+# are:
+#
+# 1. Build the project with `getdeps.py build`. This will produce binaries that
+#    are stored in a directory under /tmp. The intermediate build artifacts and
+#    dependencies (such as 3rd party libraries that are downloaded and built
+#    from source) are placed under a scratch directory, usually ~/.scratch.
+#
+# 2. Patch the binaries with `getdeps.py fixup-dyn-deps`. The built executables
+#    will need to be patched to that their dynamic library paths point to the
+#    ones built during step (1). On Linux systems, this is done via patchelf.
+#    Note that this means that once copied to the destination directory, these
+#    dynamic libraries CANNOT BE MOVED since that would break the executables.
+#
+# 3. Copy the built binaries to the destination directory. This is happens
+#    automatically during step (2) for binaries that need to be patched (along
+#    with the dynamic libraries they depend on). However, there may be other
+#    build artifacts that weren't copied during the patching step (e.g. all of
+#    hg's Python code). These need to be copied alongside the patched binaries.
+#
+# 4. Set up the environment so the executables can run. This includes setting
+#    the required permissions on the binaries and setting up any required
+#    environment variables. This script generates additional script files that
+#    can be used to set up the environment.
+
 set -euo pipefail
 
 if [ $# -lt 1 ]; then
@@ -47,7 +75,9 @@ do
   write_log "Temporary install directory for $project: $tmp_install_dir"
 
   # Avoid rebuilding the project if possible; the already-built files will
-  # still be patched and copied to the specified destination directory.
+  # still be patched and copied to the specified destination directory. This
+  # means that projects can be manually [re]built with getdeps.py, and those
+  # artifacts with be patched and copied, allowing for faster iteration.
   if [ ! -d "$tmp_install_dir/bin" ]; then
     # getdeps.py will build each project and "install" the resulting build
     # artifacts into a temporary directory. Any binary artifacts likely won't
@@ -115,6 +145,6 @@ EOF
 write_log "Done!"
 echo "EdenSCM installed successfully! Please run the following:"
 echo
-echo "sudo $prefix/fix_perms.sh"
-echo "source $prefix/env.rc"
+echo "  sudo $prefix/fix_perms.sh"
+echo "  source $prefix/env.rc"
 echo
