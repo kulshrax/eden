@@ -35,6 +35,8 @@ if [ $# -lt 1 ]; then
     exit 1
 fi
 
+projects=("eden_scm" "eden" "mononoke" "mononoke_integration")
+
 repo_path=$(dirname "$(realpath "$0")")
 getdeps_py="build/fbcode_builder/getdeps.py"
 
@@ -69,9 +71,9 @@ write_log "Using repo at: $repo_path"
 
 getdeps="python3 $repo_path/$getdeps_py"
 
-for project in "eden_scm" "eden" "mononoke";
+for project in "${projects[@]}";
 do
-  tmp_install_dir="$($getdeps show-inst-dir $project)"
+  tmp_install_dir="$($getdeps show-inst-dir "$project")"
   write_log "Temporary install directory for $project: $tmp_install_dir"
 
   # Avoid rebuilding the project if possible; the already-built files will
