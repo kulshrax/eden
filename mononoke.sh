@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -euo pipefail
+set -xeuo pipefail
 
 if [ "$#" -ne 1 ]; then
     echo "usage: $0 path/to/repo"
@@ -18,13 +18,13 @@ fi
 # If this is an EdenSCM repo, then we need to convert it to a normal hg repo
 # first before importing it. The .hg/reponame file is not used by vanilla hg.
 repo_to_import="$repo"
-if [ -f "$repo/.hg/reponame" ]; then
-  converted="$(dirname "$repo")/${repo_name}-revlog"
-  if [ ! -d "$converted" ]; then
-     hg --cwd "$repo" debugexportrevlog "$converted"
-  fi
-  repo_to_import="$converted"
-fi
+#if [ -f "$repo/.hg/reponame" ]; then
+#  converted="$(dirname "$repo")/${repo_name}-revlog"
+#  if [ ! -d "$converted" ]; then
+#     hg --cwd "$repo" debugexportrevlog "$converted"
+#  fi
+#  repo_to_import="$converted"
+#fi
 
 eden_repo="$HOME/eden"
 bin="$HOME/edenscm/mononoke/bin"
@@ -63,13 +63,6 @@ echo \$2 | jq -Rr @uri
 EOF
 chmod +x "$URLENCODE"
 
-cd "$TEST_FIXTURES"
-
-set -x +u
-
-# shellcheck disable=SC1091
-. "$TEST_FIXTURES/library.sh"
-
 export REPOID=0
 export REPONAME="$repo_name"
 export ENABLE=true
@@ -77,6 +70,15 @@ export ENABLE=true
 # The setup function will append the required settings to the repo's .hg/hgrc.
 # Clear it out to start with a blank slate.
 truncate -s 0 "$HGRCPATH"
+
+cd "$TEST_FIXTURES"
+
+# The functions in library.sh sometimes intentionally access unassigned
+# variables, so temporarily disable unassigned variable checks.
+set +u
+
+# shellcheck disable=SC1091
+. "$TEST_FIXTURES/library.sh"
 
 setup_common_config
 
@@ -92,6 +94,8 @@ wait_for_mononoke
 cd "$repo"
 setup_hg_edenapi "$repo_name"
 cd -
+
+set -u
 
 cat >> "$HGRCPATH" <<EOF
 [paths]
@@ -120,8 +124,15 @@ EOF
 # be the name of the main branch and is hardcoded everywhere, so it can't be
 # easily changed.
 /usr/bin/hg --cwd "$repo_to_import" bookmarks -f -r tip master
+mv "$repo_to_import/.hg/requires" "$repo_to_import/.hg/requires.bak"
+cat > "$repo_to_import/.hg/requires" <<EOF
+dotencode
+fncache
+store
+EOF
+
 $MONONOKE_BLOBIMPORT --repo-id $REPOID \
   --mononoke-config-path "$TESTTMP/mononoke-config" \
   "$repo_to_import/.hg" "${COMMON_ARGS[@]}"
 
-tail -f "$TESTTMP/mononoke.out"
+# tail -f "$TESTTMP/mononoke.out"
