@@ -6,11 +6,24 @@ if [ "$#" -ne 1 ]; then
     echo "usage: $0 path/to/repo"
     exit 1
 fi
-repo="$1"
+
+repo=$(realpath "$1")
+repo_name=$(basename "$repo")
 
 if [ ! -d "$repo/.hg" ]; then
   echo "$repo is not an hg repository"
   exit 1
+fi
+
+# If this is an EdenSCM repo, then we need to convert it to a normal hg repo
+# first before importing it. The .hg/reponame file is not used by vanilla hg.
+repo_to_import="$repo"
+if [ -f "$repo/.hg/reponame" ]; then
+  converted="$(dirname "$repo")/${repo_name}-revlog"
+  if [ ! -d "$converted" ]; then
+     hg --cwd "$repo" debugexportrevlog "$converted"
+  fi
+  repo_to_import="$converted"
 fi
 
 eden_repo="$HOME/eden"
@@ -21,6 +34,7 @@ tmp=$(mktemp -d -p "$base")
 # Set up environment variables that would normally be set by the test harness.
 export TEST_FIXTURES="$eden_repo/eden/mononoke/tests/integration"
 export MONONOKE_SERVER="$bin/mononoke"
+export MONONOKE_BLOBIMPORT="$bin/blobimport"
 export TESTTMP="$tmp"
 export TEST_CERTS="$TEST_FIXTURES/certs"
 export FB_TEST_FIXTURES=""
@@ -51,20 +65,36 @@ chmod +x "$URLENCODE"
 
 cd "$TEST_FIXTURES"
 
-set -x +u
+set -x
 
 # shellcheck disable=SC1091
 . "$TEST_FIXTURES/library.sh"
 
 export REPOID=0
-export REPONAME=$(basename "$repo")
+export REPONAME="$repo_name"
 export ENABLE=true
 
+# The setup function will append the required settings to the repo's .hg/hgrc.
+# Clear it out to start with a blank slate.
+truncate -s 0 "$HGRCPATH"
+
 setup_common_config
-setup_mononoke_config
 
-RUST_LOG=debug start_and_wait_for_mononoke_server
+# Start the server.
+RUST_LOG=debug mononoke
 
-blobimport "$repo" "$repo-blob"
+# This function sets a few global environment variables, so setup functions
+# that access those variables can only be run after starting up the server.
+wait_for_mononoke
+
+# This function writes to the repo's .hg/hgrc, but uses a relative path so we
+# need to temporarily cd into the repo.
+cd "$repo"
+setup_hg_edenapi "$repo_name"
+cd -
+
+$MONONOKE_BLOBIMPORT --repo-id $REPOID \
+  --mononoke-config-path "$TESTTMP/mononoke-config" \
+  "$repo_to_import/.hg" "${COMMON_ARGS[@]}"
 
 tail -f "$TESTTMP/mononoke.out"
