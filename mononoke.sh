@@ -65,7 +65,7 @@ chmod +x "$URLENCODE"
 
 cd "$TEST_FIXTURES"
 
-set -x
+set -x +u
 
 # shellcheck disable=SC1091
 . "$TEST_FIXTURES/library.sh"
@@ -92,6 +92,29 @@ wait_for_mononoke
 cd "$repo"
 setup_hg_edenapi "$repo_name"
 cd -
+
+cat >> "$HGRCPATH" <<EOF
+[paths]
+default=mononoke://$(mononoke_address)/$repo_name
+EOF
+
+# By default the repo name is hardcoded as "fbsource" upon `hg init`.
+echo "$repo_name" > "$repo/.hg/reponame"
+cat >> "$HGRCPATH" <<EOF
+[remotefilelog]
+reponame=$repo_name
+EOF
+
+# edenapi.url should have already been set up setup_hg_edenapi, but it sets it
+# incorrectly so we need to manually override it. We can't use the address in
+# `mononoke_address` because it uses 127.0.0.1, whereas the TLS certificates
+# for EdenAPI use `localhost` as the common name. The variable $MONONOKE_SOCKET
+# is confusingly named; it actually contains just the server port number.
+cat >> "$HGRCPATH" <<EOF
+# Override previously set EdenAPI URL since it shouldn't contain the repo name.
+[edenapi]
+url=https://localhost:$MONONOKE_SOCKET/edenapi
+EOF
 
 $MONONOKE_BLOBIMPORT --repo-id $REPOID \
   --mononoke-config-path "$TESTTMP/mononoke-config" \
