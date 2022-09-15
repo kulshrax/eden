@@ -116,6 +116,10 @@ cat >> "$HGRCPATH" <<EOF
 url=https://localhost:$MONONOKE_SOCKET/edenapi
 EOF
 
+# Ensure that the "master" bookmark exists prior to import. This is assumed to
+# be the name of the main branch and is hardcoded everywhere, so it can't be
+# easily changed.
+/usr/bin/hg --cwd "$repo_to_import" bookmarks -f -r tip master
 $MONONOKE_BLOBIMPORT --repo-id $REPOID \
   --mononoke-config-path "$TESTTMP/mononoke-config" \
   "$repo_to_import/.hg" "${COMMON_ARGS[@]}"
