@@ -15,20 +15,31 @@ if [ ! -d "$repo/.hg" ]; then
   exit 1
 fi
 
+# XXX: This is a hacky way of detecting whether a repo was created with stock
+# Mercurial or with EdenSCM. It happens to work because EdenSCM does not have
+# a `share-safe` feature (since it was forked at hg version 4.2, prior to this
+# feature's introduction), whereas it appears that most modern Mercurial repos
+# require this feature.
+function is_eden_repo {
+   ! grep 'share-safe' < "$1/.hg/requires" 2>&1 > /dev/null
+}
+
 # If this is an EdenSCM repo, then we need to convert it to a normal hg repo
-# first before importing it. The .hg/reponame file is not used by vanilla hg.
+# first before importing it.
 repo_to_import="$repo"
-#if [ -f "$repo/.hg/reponame" ]; then
-#  converted="$(dirname "$repo")/${repo_name}-revlog"
-#  if [ ! -d "$converted" ]; then
-#     hg --cwd "$repo" debugexportrevlog "$converted"
-#  fi
-#  repo_to_import="$converted"
-#fi
+if is_eden_repo "$repo"; then
+  converted="$(dirname "$repo")/${repo_name}-revlog"
+  if [ ! -d "$converted" ]; then
+     hg --cwd "$repo" debugexportrevlog "$converted"
+  fi
+  repo_to_import="$converted"
+fi
 
 eden_repo="$HOME/eden"
 bin="$HOME/edenscm/mononoke/bin"
 base="$HOME/mononoke"
+
+rm -rf $base/tmp.*
 tmp=$(mktemp -d -p "$base")
 
 # Set up environment variables that would normally be set by the test harness.
@@ -113,7 +124,7 @@ EOF
 # incorrectly so we need to manually override it. We can't use the address in
 # `mononoke_address` because it uses 127.0.0.1, whereas the TLS certificates
 # for EdenAPI use `localhost` as the common name. The variable $MONONOKE_SOCKET
-# is confusingly named; it actually contains just the server port number.
+# is confusingly named--it actually contains just the server port number.
 cat >> "$HGRCPATH" <<EOF
 # Override previously set EdenAPI URL since it shouldn't contain the repo name.
 [edenapi]
@@ -124,6 +135,7 @@ EOF
 # be the name of the main branch and is hardcoded everywhere, so it can't be
 # easily changed.
 /usr/bin/hg --cwd "$repo_to_import" bookmarks -f -r tip master
+
 mv "$repo_to_import/.hg/requires" "$repo_to_import/.hg/requires.bak"
 cat > "$repo_to_import/.hg/requires" <<EOF
 dotencode
@@ -133,6 +145,7 @@ EOF
 
 $MONONOKE_BLOBIMPORT --repo-id $REPOID \
   --mononoke-config-path "$TESTTMP/mononoke-config" \
-  "$repo_to_import/.hg" "${COMMON_ARGS[@]}"
+  "$repo_to_import/.hg" "${COMMON_ARGS[@]}" \
+  || pkill mononoke
 
-# tail -f "$TESTTMP/mononoke.out"
+tail -f "$TESTTMP/mononoke.out"
