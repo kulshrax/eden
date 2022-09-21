@@ -7,14 +7,21 @@ if [ "$#" -ne 1 ]; then
     exit 1
 fi
 
-# These environment variables will be exported by the environment setup script,
-# but we need the values for some preliminary steps before sourcing it.
-REPO=$(realpath "$1")
-REPONAME=$(basename "$REPO")
-
-if [ ! -d "$REPO/.hg" ]; then
-  echo "$REPO is not an hg repository"
+if [ ! -d "$1/.hg" ]; then
+  echo "$1 is not an hg repository"
   exit 1
+fi
+
+script_dir=$(dirname "$(realpath "$0")")
+# shellcheck disable=SC1091
+. "$script_dir/mononoke_env.sh"
+
+init_mononoke_env "$1"
+
+if [ -n "$TESTTMP" && -n "$(ls -A "$TESTTMP")" ]; then
+  echo "Specified TESTTMP directory '$TESTTMP' is not empty" >&2
+  exit 1
+  # rm -rfv $TESTTMP/*
 fi
 
 # XXX: This is a hacky way of detecting whether a repo was created with stock
@@ -38,14 +45,6 @@ if is_eden_repo "$REPO"; then
   fi
   repo_to_import="$converted"
 fi
-
-script_dir=$(dirname "$(realpath "$0")")
-# shellcheck disable=SC1091
-. "$script_dir/mononoke_env.sh"
-
-init_mononoke_env "$1"
-
-rm -rfv "$TESTTMP/*"
 
 # The setup function will append the required settings to the repo's .hg/hgrc.
 # Clear it out to start with a blank slate.

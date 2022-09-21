@@ -28,13 +28,9 @@ mkdir -p "$HG_REPO/.hg"
 HGRCPATH="$HG_REPO/.hg/hgrc"
 touch "$HGRCPATH"
 
-if [ -n "$TESTTMP" ]; then
-  rm -rfv "$TESTTMP/*"
-fi
-
 cd "$TEST_FIXTURES"
 
-export REPOID=1
+# export REPOID=1
 
 set +u
 

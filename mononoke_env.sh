@@ -1,32 +1,42 @@
 #!/bin/bash
 
 function init_mononoke_env {
-  if [[ "$#" -lt 1 ]]; then
+  if [ "$#" -lt 1 ]; then
     echo "no repo path specified" >&2
     return 1
   fi
+
+  REPO=$(realpath "$1")
+  REPONAME=$(basename "$REPO")
+  export REPO
+  export REPONAME
+
 
   local eden_repo="$HOME/eden"
   local bin="$HOME/edenscm/mononoke/bin"
   local base="$HOME/mononoke"
 
-  local tmp
-  #tmp=$(mktemp -d -p "$base")
-  tmp="$base"
+  # XXX: Temporarily hardcoded for testing.
+  TESTTMP="$base"
+
+  if [ -z "$TESTTMP" ]; then
+    TESTTMP=$(mktemp -d -p "$base")
+    export TESTTMP
+  fi
+
+  if [ -d "$REPO/.hg" ]; then
+    HGRCPATH="$REPO/.hg/hgrc"
+  else
+    # If this is a git repo, we should have the setup script write its hgrc
+    # to a file outside the repo, and then use it later as the hgrc for the
+    # corresponding hg repo.
+    HGRCPATH="$TESTTMP/hgrc"
+  fi
 
   # Set up environment variables that would normally be set by the test harness.
-  export REPO
-  REPO=$(realpath "$1")
-  export REPONAME
-  REPONAME=$(basename "$REPO")
   export REPOID=0
   export ENABLE=1
   export TEST_FIXTURES="$eden_repo/eden/mononoke/tests/integration"
-  export MONONOKE_SERVER="$bin/mononoke"
-  export MONONOKE_BLOBIMPORT="$bin/blobimport"
-  export MONONOKE_GITIMPORT="$bin/gitimport"
-  export MONONOKE_ADMIN="$bin/newadmin"
-  export TESTTMP="$tmp"
   export TEST_CERTS="$TEST_FIXTURES/certs"
   export FB_TEST_FIXTURES=""
   export DB_SHARD_NAME=""
@@ -37,12 +47,18 @@ function init_mononoke_env {
   export SCUBA_CENSORED_LOGGING_PATH=""
   export DISABLE_HTTP_CONTROL_API=""
   export ADDITIONAL_MONONOKE_COMMON_CONFIG=""
-  export URLENCODE="$tmp/urlencode.sh"
+  export URLENCODE="$TESTTMP/urlencode.sh"
   export BLAME_VERSION=""
   export HG_SET_COMMITTER_EXTRA=""
   export SPARSE_PROFILES_LOCATION=""
   export HGRCPATH="$REPO/.hg/hgrc"
   export DUMMYSSH="ssh"
+
+  # Paths to various Mononoke binaries used by the tests.
+  export MONONOKE_SERVER="$bin/mononoke"
+  export MONONOKE_BLOBIMPORT="$bin/blobimport"
+  export MONONOKE_GITIMPORT="$bin/gitimport"
+  export MONONOKE_ADMIN="$bin/newadmin"
 
   # The setup code in library.sh expects that $URLENCODE will contain a path to
   # a program with an `encode` subcommand that URL-encodes its argument. Since
@@ -57,4 +73,6 @@ EOF
   set +u
   # shellcheck disable=SC1091
   . "$TEST_FIXTURES/library.sh"
+
+  unset HG_NO_DEFAULT_CONFIG
 }
