@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Start the Mononoke server and update the configuration of the specified hg
+# repo to use the newly-started server process. Assumes that the repository's
+# data has already been imported into the server.
+
 set -euxo pipefail
 
 repo=$(realpath "$1")
@@ -12,7 +16,7 @@ script_dir=$(dirname "$(realpath "$0")")
 # shellcheck disable=SC1091
 . "$script_dir/mononoke_env.sh"
 
-init_hg_repo_env "$1"
+init_repo_env "$1"
 
 truncate -s 0 "$DAEMON_PIDS"
 
@@ -20,6 +24,10 @@ set +u
 start_and_wait_for_mononoke_server
 set -u
 
+truncate -s 0 "$HGRCPATH"
+setup_common_hg_configs
+# `setup_hg_edenapi` writes to .hg/hgrc instead of using $HGRCPATH, so we
+# need to cd into the repo before calling it.
 cd "$REPO"
 setup_hg_edenapi "$REPONAME"
 

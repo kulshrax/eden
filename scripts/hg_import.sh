@@ -16,16 +16,13 @@ script_dir=$(dirname "$(realpath "$0")")
 # shellcheck disable=SC1091
 . "$script_dir/mononoke_env.sh"
 
-init_hg_repo_env "$1"
+init_repo_env "$1"
 
-if [ -n "$TESTTMP" && -n "$(ls -A "$TESTTMP")" ]; then
-  echo "Specified TESTTMP directory '$TESTTMP' is not empty" >&2
-  exit 1
-  # rm -rfv $TESTTMP/*
+if [ -n "$TESTTMP" ] && [ -n "$(ls -A "$TESTTMP")" ]; then
+  rm -rfv "${TESTTMP:?}/*"
 fi
 
-
-cd "$TEST_FIXTURES"
+cd "$TESTTMP"
 
 truncate -s 0 "$HGRCPATH"
 

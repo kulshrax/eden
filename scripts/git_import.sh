@@ -19,6 +19,10 @@ script_dir=$(dirname "$(realpath "$0")")
 
 init_mononoke_env "$1"
 
+if [ -n "$TESTTMP" ] && [ -n "$(ls -A "$TESTTMP")" ]; then
+  rm -rfv "${TESTTMP:?}"/*
+fi
+
 cd "$TESTTMP"
 
 set +u
