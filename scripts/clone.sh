@@ -48,3 +48,5 @@ hg clone "mononoke://$server_addr/$repo" "$path" --shallow \
   --config auth.edenapi.key="$key" \
   --config auth.edenapi.cacerts="$ca" \
   --config web.cacerts="$ca"
+
+"$script_dir/update_hgrc.sh" "$path"
