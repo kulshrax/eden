@@ -2,6 +2,12 @@
 
 set -euxo pipefail
 
+repo=$(realpath "$1")
+if [ ! -d "$repo/.hg" ]; then
+  echo "$repo is not an hg repository"
+  exit 1
+fi
+
 script_dir=$(dirname "$(realpath "$0")")
 # shellcheck disable=SC1091
 . "$script_dir/mononoke_env.sh"
