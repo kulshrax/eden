@@ -145,8 +145,15 @@ alias getdeps="$getdeps"
 EOF
 
 write_log "Done!"
-echo "EdenSCM installed successfully! Please run the following:"
+echo "EdenSCM binaries have been installed in $prefix."
+echo "Please run the following to setup the environment:"
 echo
-echo "  sudo $prefix/fix_perms.sh"
 echo "  source $prefix/env.rc"
 echo
+echo "Attempting to set permissions for EdenFS binaries. If this fails (e.g.,"
+echo "due to sudo prompting for a password), run the following:"
+echo
+echo "  sudo $prefix/fix_perms.sh"
+echo
+
+sudo --non-interactive "$prefix/fix_perms.sh"
