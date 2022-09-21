@@ -11,7 +11,8 @@ function init_mononoke_env {
   local base="$HOME/mononoke"
 
   local tmp
-  tmp=$(mktemp -d -p "$base")
+  #tmp=$(mktemp -d -p "$base")
+  tmp="$base"
 
   # Set up environment variables that would normally be set by the test harness.
   export REPO
