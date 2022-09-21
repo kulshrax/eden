@@ -30,6 +30,8 @@ function init_test_env {
   if [ -z "$TESTTMP" ]; then
     TESTTMP=$(mktemp -d -p "$base")
     export TESTTMP
+  else
+    mkdir -p "$TESTTMP"
   fi
 
   # Set up environment variables that would normally be set by the test harness.
