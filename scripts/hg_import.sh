@@ -18,10 +18,6 @@ script_dir=$(dirname "$(realpath "$0")")
 
 init_repo_env "$1"
 
-if [ -n "$TESTTMP" ] && [ -n "$(ls -A "$TESTTMP")" ]; then
-  rm -rfv "${TESTTMP:?}/*"
-fi
-
 cd "$TESTTMP"
 
 truncate -s 0 "$HGRCPATH"

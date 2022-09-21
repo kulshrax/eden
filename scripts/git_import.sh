@@ -17,18 +17,15 @@ script_dir=$(dirname "$(realpath "$0")")
 # shellcheck disable=SC1091
 . "$script_dir/mononoke_env.sh"
 
-init_mononoke_env "$1"
+init_repo_env "$1"
 
-if [ -n "$TESTTMP" ] && [ -n "$(ls -A "$TESTTMP")" ]; then
-  rm -rfv "${TESTTMP:?}"/*
-fi
+HGRCPATH="$TESTTMP/hgrc"
 
 cd "$TESTTMP"
 
 set +u
 
-HGRCPATH="$TESTTMP/hgrc" \
-  ENABLED_DERIVED_DATA='["git_trees", "filenodes", "hgchangesets"]' \
+ENABLED_DERIVED_DATA='["git_trees", "filenodes", "hgchangesets"]' \
   setup_common_config
 
 gitimport --git-command-path=/usr/bin/git "$REPO" --derive-hg full-repo \

@@ -13,7 +13,7 @@ function init_repo_env {
   if [ -f "$REPO/.hg/reponame" ]; then
     REPONAME=$(cat "$REPO/.hg/reponame")
   else
-    REPONAME=$(basename "$0")
+    REPONAME=$(basename "$REPO")
   fi
 
   export HGRCPATH="$REPO/.hg/hgrc"
