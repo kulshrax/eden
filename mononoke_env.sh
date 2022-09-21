@@ -1,6 +1,6 @@
 #!/bin/bash
 
-function init_mononoke_env {
+function init_hg_repo_env {
   if [ "$#" -lt 1 ]; then
     echo "no repo path specified" >&2
     return 1
@@ -10,8 +10,10 @@ function init_mononoke_env {
   REPONAME=$(basename "$REPO")
   export REPO
   export REPONAME
+  export HGRCPATH="$REPO/.hg/hgrc"
+}
 
-
+function init_mononoke_env {
   local eden_repo="$HOME/eden"
   local bin="$HOME/edenscm/mononoke/bin"
   local base="$HOME/mononoke"
@@ -22,15 +24,6 @@ function init_mononoke_env {
   if [ -z "$TESTTMP" ]; then
     TESTTMP=$(mktemp -d -p "$base")
     export TESTTMP
-  fi
-
-  if [ -d "$REPO/.hg" ]; then
-    HGRCPATH="$REPO/.hg/hgrc"
-  else
-    # If this is a git repo, we should have the setup script write its hgrc
-    # to a file outside the repo, and then use it later as the hgrc for the
-    # corresponding hg repo.
-    HGRCPATH="$TESTTMP/hgrc"
   fi
 
   # Set up environment variables that would normally be set by the test harness.
@@ -51,14 +44,13 @@ function init_mononoke_env {
   export BLAME_VERSION=""
   export HG_SET_COMMITTER_EXTRA=""
   export SPARSE_PROFILES_LOCATION=""
-  export HGRCPATH="$REPO/.hg/hgrc"
   export DUMMYSSH="ssh"
 
   # Paths to various Mononoke binaries used by the tests.
   export MONONOKE_SERVER="$bin/mononoke"
   export MONONOKE_BLOBIMPORT="$bin/blobimport"
   export MONONOKE_GITIMPORT="$bin/gitimport"
-  export MONONOKE_ADMIN="$bin/newadmin"
+  export MONONOKE_ADMIN="$bin/admin"
 
   # The setup code in library.sh expects that $URLENCODE will contain a path to
   # a program with an `encode` subcommand that URL-encodes its argument. Since
@@ -76,3 +68,5 @@ EOF
 
   unset HG_NO_DEFAULT_CONFIG
 }
+
+init_mononoke_env
