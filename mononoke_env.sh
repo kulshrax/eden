@@ -24,6 +24,8 @@ function init_mononoke_env {
   export TEST_FIXTURES="$eden_repo/eden/mononoke/tests/integration"
   export MONONOKE_SERVER="$bin/mononoke"
   export MONONOKE_BLOBIMPORT="$bin/blobimport"
+  export MONONOKE_GITIMPORT="$bin/gitimport"
+  export MONONOKE_ADMIN="$bin/newadmin"
   export TESTTMP="$tmp"
   export TEST_CERTS="$TEST_FIXTURES/certs"
   export FB_TEST_FIXTURES=""
