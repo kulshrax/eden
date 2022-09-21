@@ -9,11 +9,11 @@ fi
 
 # These environment variables will be exported by the environment setup script,
 # but we need the values for some preliminary steps before sourcing it.
-repo=$(realpath "$1")
-repo_name=$(basename "$repo")
+REPO=$(realpath "$1")
+REPONAME=$(basename "$REPO")
 
-if [ ! -d "$repo/.hg" ]; then
-  echo "$repo is not an hg repository"
+if [ ! -d "$REPO/.hg" ]; then
+  echo "$REPO is not an hg repository"
   exit 1
 fi
 
@@ -30,17 +30,18 @@ function is_eden_repo {
 # first before importing it. We need to do this step BEFORE sourcing the test
 # environment setup script because it configures hg in such a way that makes
 # `hg debugexportrevlog` crash.
-repo_to_import="$repo"
-if is_eden_repo "$repo"; then
-  converted="$(dirname "$repo")/$repo_name-revlog"
+repo_to_import="$REPO"
+if is_eden_repo "$REPO"; then
+  converted="$(dirname "$REPO")/$REPONAME-revlog"
   if [ ! -d "$converted" ]; then
-     hg --cwd "$repo" debugexportrevlog "$converted"
+     hg --cwd "$REPO" debugexportrevlog "$converted"
   fi
   repo_to_import="$converted"
 fi
 
+script_dir=$(dirname "$(realpath "$0")")
 # shellcheck disable=SC1091
-. mononoke_env.sh
+. "$script_dir/mononoke_env.sh"
 
 init_mononoke_env "$1"
 

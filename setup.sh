@@ -35,7 +35,7 @@ if [ $# -lt 1 ]; then
     exit 1
 fi
 
-projects=("eden_scm" "eden" "mononoke" "mononoke_integration")
+projects=("eden_scm" "eden" "mononoke")
 
 repo_path=$(dirname "$(realpath "$0")")
 getdeps_py="build/fbcode_builder/getdeps.py"
