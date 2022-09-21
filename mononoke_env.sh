@@ -57,5 +57,4 @@ EOF
   set +u
   # shellcheck disable=SC1091
   . "$TEST_FIXTURES/library.sh"
-  set -u
 }
