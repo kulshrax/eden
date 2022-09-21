@@ -1,15 +1,21 @@
 #!/bin/bash
 
-function init_hg_repo_env {
+function init_repo_env {
   if [ "$#" -lt 1 ]; then
     echo "no repo path specified" >&2
     return 1
   fi
 
-  REPO=$(realpath "$1")
-  REPONAME=$(basename "$REPO")
   export REPO
   export REPONAME
+
+  REPO=$(realpath "$1")
+  if [ -f "$REPO/.hg/reponame" ]; then
+    REPONAME=$(cat "$REPO/.hg/reponame")
+  else
+    REPONAME=$(basename "$0")
+  fi
+
   export HGRCPATH="$REPO/.hg/hgrc"
 }
 
