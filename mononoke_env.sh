@@ -1,19 +1,8 @@
 #!/bin/bash
 
-function mononoke_env_init {
+function init_mononoke_env {
   if [[ "$#" -lt 1 ]]; then
-    echo "no repo path given" >&2
-    return 1
-  fi
-
-  local repo
-  repo=$(realpath "$1")
-
-  local repo_name
-  repo_name=$(basename "$repo")
-
-  if [[ ! -d "$repo/.hg" && ! -d "$repo/.git" ]]; then
-    echo "$repo is not an hg or git repository" >&2
+    echo "no repo path specified" >&2
     return 1
   fi
 
@@ -25,6 +14,12 @@ function mononoke_env_init {
   tmp=$(mktemp -d -p "$base")
 
   # Set up environment variables that would normally be set by the test harness.
+  export REPO
+  REPO=$(realpath "$1")
+  export REPONAME
+  REPONAME=$(basename "$REPO")
+  export REPOID=0
+  export ENABLE=1
   export TEST_FIXTURES="$eden_repo/eden/mononoke/tests/integration"
   export MONONOKE_SERVER="$bin/mononoke"
   export MONONOKE_BLOBIMPORT="$bin/blobimport"
@@ -43,23 +38,21 @@ function mononoke_env_init {
   export BLAME_VERSION=""
   export HG_SET_COMMITTER_EXTRA=""
   export SPARSE_PROFILES_LOCATION=""
-  export HGRCPATH="$repo/.hg/hgrc"
+  export HGRCPATH="$REPO/.hg/hgrc"
   export DUMMYSSH="ssh"
 
-  # The setup code in library.sh expects that $URLENCODE will contain a path to a
-  # program with an `encode` subcommand that URL-encodes its argument. Since it
-  # is always called with the `encode` subcommand, we can simply ignore the first
-  # argument and use `jq` to encode the second.
+  # The setup code in library.sh expects that $URLENCODE will contain a path to
+  # a program with an `encode` subcommand that URL-encodes its argument. Since
+  # it is always called with the `encode` subcommand, we can simply ignore the
+  # first argument and use `jq` to encode the second.
   cat > "$URLENCODE" <<EOF
 #!/bin/bash
 echo \$2 | jq -Rr @uri
 EOF
   chmod +x "$URLENCODE"
 
-  export REPOID=0
-  export REPONAME="$repo_name"
-  export ENABLE=true
-
+  set +u
   # shellcheck disable=SC1091
   . "$TEST_FIXTURES/library.sh"
+  set -u
 }
