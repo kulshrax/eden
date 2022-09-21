@@ -13,7 +13,7 @@ function init_hg_repo_env {
   export HGRCPATH="$REPO/.hg/hgrc"
 }
 
-function init_mononoke_env {
+function init_test_env {
   local eden_repo="$HOME/eden"
   local bin="$HOME/edenscm/mononoke/bin"
   local base="$HOME/mononoke"
@@ -69,4 +69,4 @@ EOF
   unset HG_NO_DEFAULT_CONFIG
 }
 
-init_mononoke_env
+init_test_env
