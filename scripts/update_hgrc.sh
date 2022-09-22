@@ -8,7 +8,7 @@ script_dir=$(dirname "$(realpath "$0")")
 # shellcheck disable=SC1091
 . "$script_dir/mononoke_env.sh"
 
-init_repo_env "$1"
+init_repo_env "${1:-.}"
 
 if [ ! -d "$REPO/.hg" ]; then
   echo "$REPO is not an hg repository"
