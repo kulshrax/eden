@@ -37,6 +37,10 @@ fi
 
 projects=("eden_scm" "eden" "mononoke")
 
+script_dir=$(dirname "$(realpath "$0")")
+cd "$script_dir"
+repo_path=$(git rev-parse --show-toplevel || true)
+
 prefix=$(realpath "$1")
 mkdir -p "$prefix"
 cd "$prefix"
@@ -53,7 +57,6 @@ write_log "Installing under: $prefix"
 
 # If we're not running the script from within the eden repo itself, check if
 # there's a copy of the repo in the installation directory, otherwise clone it.
-repo_path=$(git rev-parse --show-toplevel || true)
 getdeps_py="build/fbcode_builder/getdeps.py"
 if [ ! -f "$repo_path/$getdeps_py" ]; then
   repo="source"

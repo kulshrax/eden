@@ -33,8 +33,8 @@ gitimport --git-command-path=/usr/bin/git "$REPO" --derive-hg full-repo \
 
 set -u
 
-master_blake2_hash=$(grep master "$TESTTMP/gitimport.out" \
-  | grep -o 'Blake2([[:xdigit:]]*)' \
+master_blake2_hash=$(grep -E 'ref/heads/main|refs/heads/master' \
+  "$TESTTMP/gitimport.out" | grep -o 'Blake2([[:xdigit:]]*)' \
   | sed -E 's/^Blake2\(([[:xdigit:]]*)\)$/\1/')
 
 mononoke_admin bookmarks set master "$master_blake2_hash"
