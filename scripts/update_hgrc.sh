@@ -43,6 +43,18 @@ url=https://$edenapi_addr/edenapi
 
 [devel]
 segmented-changelog-rev-compat=false
+
+[extensions]
+commitcloud=
+infinitepush=
+
+[commitcloud]
+servicetype=local
+servicelocation=$TESTTMP
+pullcreatemarkers=
+
+[infinitepush]
+branchpattern=re:scratch/.*
 EOF
 
 echo "Updated $HGRCPATH to talk to server listening at $server_addr"

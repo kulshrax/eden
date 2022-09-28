@@ -73,6 +73,7 @@ EOF
   set +u
   # shellcheck disable=SC1091
   . "$TEST_FIXTURES/library.sh"
+  # . "$eden_repo/eden/scm/tests/infinitepush/library.sh"
 
   unset HG_NO_DEFAULT_CONFIG
 }
