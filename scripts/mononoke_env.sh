@@ -12,7 +12,9 @@ function init_repo_env {
   REPO=$(realpath "$1")
   if [ -f "$REPO/.hg/reponame" ]; then
     REPONAME=$(cat "$REPO/.hg/reponame")
-  else
+  fi
+
+  if [ -n "$REPONAME" ] || [ "$REPONAME" -eq "fbsource"]; then
     REPONAME=$(basename "$REPO")
   fi
 
@@ -23,9 +25,6 @@ function init_test_env {
   local eden_repo="$HOME/eden"
   local bin="$HOME/edenscm/mononoke/bin"
   local base="$HOME/mononoke"
-
-  # XXX: Temporarily hardcoded for testing.
-  TESTTMP="$base"
 
   if [ -z "$TESTTMP" ]; then
     TESTTMP=$(mktemp -d -p "$base")

@@ -56,3 +56,6 @@ for dir in $dirs; do
     hg commit -m "Removed directory $dir"
     echo "Removed $dir"
 done
+
+echo "Cleaning up any unknown files"
+hg purge
