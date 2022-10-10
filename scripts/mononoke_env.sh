@@ -26,6 +26,7 @@ function init_test_env {
   local bin="$HOME/edenscm/mononoke/bin"
   local base="$HOME/mononoke"
 
+  TESTTMP="$base"
   if [ -z "$TESTTMP" ]; then
     TESTTMP=$(mktemp -d -p "$base")
     export TESTTMP

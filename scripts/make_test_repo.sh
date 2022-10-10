@@ -1,31 +1,27 @@
 #!/bin/bash
 
-set -euo pipefail
+set -euxo pipefail
 
-if [[ "$#" -lt 1 ]]; then
-  echo "usage: $0 SRC_REPO [DST_REPO]" >&2
+if [[ "$#" -lt 2 ]]; then
+  echo "usage: $0 SRC_REPO DST_REPO" >&2
   exit 1
 fi
 
-src_repo="$1"
-dst_repo="${2:-$1-eden}"
-tmp=$(mktemp -d)
+src_repo=$(realpath "$1")
+dst_repo=$(realpath "$2")
 
 echo "Cleaning $src_repo"
 cd "$src_repo"
 /usr/bin/hg update -C .
 /usr/bin/hg purge
 
+alias hg=sl
+
+cd "$src_repo"
 echo "Finding files and directories"
 files=$(find . -maxdepth 1 -type f | sed 's/^\.\///'| sort)
 dirs=$(find . -maxdepth 1 -type d | sed 's/^\.\///' | sed '/^\.$/d;/^\.hg$/d'| sort)
 
-echo "Creating $dst_repo"
-if [ -d "$dst_repo" ]; then
-  echo "$dst_repo already exists; moving aside to $tmp"
-  mv "$dst_repo" "$tmp"
-fi
-hg init "$dst_repo"
 cd "$dst_repo"
 
 echo "Adding top-level files"
@@ -33,12 +29,12 @@ for file in $files; do
   mv "$src_repo/$file" .
 done
 
-# Move these aside.
-mv .hgignore .gitignore "$tmp"
+# These tend to cause issues with adding and removing directories.
+rm -f .hgignore .gitignore
 
 hg addremove
 hg commit -m "Added top level files"
-echo "Committed files"
+hg push --to master
 
 echo "Adding directories"
 for dir in $dirs; do
@@ -47,6 +43,8 @@ for dir in $dirs; do
     hg add "$dir"
     hg commit -m "Added directory $dir"
     echo "Committed contents of $dir"
+    hg push --to master
+    echo "Pushed $dir"
 done
 
 echo "Removing directories"
@@ -55,7 +53,7 @@ for dir in $dirs; do
     hg rm "$dir"
     hg commit -m "Removed directory $dir"
     echo "Removed $dir"
+    hg push --to master
+    echo "Pushed removal of $dir"
 done
 
-echo "Cleaning up any unknown files"
-hg purge
