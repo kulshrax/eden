@@ -29,8 +29,8 @@ ENABLED_DERIVED_DATA='["git_trees", "blame", "changeset_info",
   "deleted_manifest", "fastlog", "filenodes", "fsnodes", "unodes",
   "hgchangesets", "skeleton_manifests", "bssm"]' setup_common_config
 
-# gitimport --git-command-path=/usr/bin/git "$REPO" --derive-hg full-repo \
-# 2>&1 | tee "$TESTTMP/gitimport.out"
+gitimport --git-command-path=/usr/bin/git "$REPO" --derive-hg full-repo \
+  2>&1 | tee "$TESTTMP/gitimport.out"
 
 set -u
 
