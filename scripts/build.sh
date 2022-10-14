@@ -35,7 +35,7 @@ if [ $# -lt 1 ]; then
     exit 1
 fi
 
-projects=("eden_scm" "eden" "mononoke")
+projects=("mononoke")
 
 script_dir=$(dirname "$(realpath "$0")")
 cd "$script_dir"
